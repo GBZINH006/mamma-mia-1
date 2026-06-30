@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login Admin — Mamma Mia Delivery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;800&family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{
+  --crosta:#2b1810; --molho:#c1391f; --basilico:#3f6b3a;
+  --mozzarela:#fff8ec; --queijo:#f4c542; --creme:#fbf2dd;
+  --texto:#2b1810; --linha:rgba(43,24,16,.13);
+  --shadow:0 18px 45px rgba(43,24,16,.18);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  min-height:100vh;display:grid;place-items:center;padding:24px;
+  font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--texto);
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:-1;
+  background:
+    radial-gradient(circle at 20% 15%, rgba(193,57,31,.18), transparent 28%),
+    radial-gradient(circle at 90% 80%, rgba(63,107,58,.18), transparent 30%),
+    radial-gradient(circle at 1px 1px, rgba(43,24,16,.045) 1px, transparent 0);
+  background-size:auto,auto,22px 22px;
+}
+.login-card{
+  width:min(460px,100%);background:rgba(255,248,236,.86);
+  border:1px solid var(--linha);border-radius:30px;padding:34px;
+  box-shadow:var(--shadow);backdrop-filter:blur(12px);
+}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Fraunces',serif;font-weight:800;font-size:1.55rem;color:var(--molho);margin-bottom:28px}
+.logo span{width:12px;height:12px;border-radius:50%;background:var(--basilico);display:inline-block}
+.badge{display:inline-flex;gap:8px;align-items:center;background:#fff;border:1px solid var(--linha);border-radius:999px;padding:8px 12px;font-weight:800;font-size:.78rem;color:var(--basilico);margin-bottom:16px}
+h1{font-family:'Fraunces',serif;font-size:2.15rem;line-height:1;color:var(--crosta);margin-bottom:10px}
+p{color:#6b5645;line-height:1.55;margin-bottom:26px}
+.field{margin-bottom:16px}
+label{display:flex;align-items:center;gap:7px;font-size:.88rem;font-weight:800;margin-bottom:8px}
+input{
+  width:100%;border:1.5px solid var(--linha);border-radius:15px;
+  padding:14px 15px;background:#fff;font:inherit;outline:none;
+}
+input:focus{border-color:var(--molho);box-shadow:0 0 0 4px rgba(193,57,31,.10)}
+button{
+  width:100%;border:0;border-radius:16px;padding:15px 18px;margin-top:8px;
+  background:var(--molho);color:white;font:inherit;font-weight:900;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  box-shadow:0 10px 24px rgba(193,57,31,.28);transition:.2s ease;
+}
+button:hover{transform:translateY(-2px)}
+button:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.msg{margin-top:15px;font-weight:800;font-size:.9rem;min-height:22px}
+.msg.error{color:var(--molho)}
+.msg.ok{color:var(--basilico)}
+.small{font-size:.84rem;margin:18px 0 0;color:#7d6655;text-align:center}
+.icon{width:18px;height:18px;stroke-width:2.3}
+</style>
+</head>
+<body>
+  <main class="login-card">
+    <div class="logo"><span></span>Mamma Mia Admin</div>
+    <div class="badge"><i data-lucide="shield-check" class="icon"></i> Acesso da equipe</div>
+    <h1>Painel do cardápio</h1>
+    <p>Entre para cadastrar pizzas, alterar preços, categorias, imagens e disponibilidade no Supabase.</p>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="email"><i data-lucide="mail" class="icon"></i> E-mail</label>
+        <input id="email" type="email" autocomplete="email" placeholder="admin@email.com" required>
+      </div>
+      <div class="field">
+        <label for="senha"><i data-lucide="lock" class="icon"></i> Senha</label>
+        <input id="senha" type="password" autocomplete="current-password" placeholder="Sua senha" required>
+      </div>
+      <button id="btn" type="submit"><i data-lucide="log-in" class="icon"></i> Entrar</button>
+      <div id="msg" class="msg"></div>
+    </form>
+
+    <p class="small">Crie esse usuário em Authentication → Users no painel do Supabase.</p>
+  </main>
+
+<script src="supabase-config.js"></script>
+<script>
+lucide.createIcons();
+
+const form = document.getElementById('loginForm');
+const btn = document.getElementById('btn');
+const msg = document.getElementById('msg');
+
+async function jaLogado(){
+  const { data } = await supabaseClient.auth.getSession();
+  if(data.session) location.href = 'admin.html';
+}
+jaLogado();
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  msg.textContent = '';
+  msg.className = 'msg';
+  btn.disabled = true;
+  btn.innerHTML = '<i data-lucide="loader-2" class="icon"></i> Entrando...';
+  lucide.createIcons();
+
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('senha').value;
+
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+  if(error){
+    msg.textContent = 'Login inválido. Confira e-mail e senha.';
+    msg.className = 'msg error';
+    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="log-in" class="icon"></i> Entrar';
+    lucide.createIcons();
+    return;
+  }
+
+  msg.textContent = 'Entrou! Redirecionando...';
+  msg.className = 'msg ok';
+  location.href = 'admin.html';
+});
+</script>
+</body>
+</html>
