@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mamma Mia Delivery — Pizzaria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,500&family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{
+  --crosta:#2b1810; --molho:#c1391f; --molho-dark:#9c2c16;
+  --basilico:#3f6b3a; --basilico-dark:#2b4a27;
+  --mozzarela:#fff8ec; --queijo:#f4c542; --creme:#fbf2dd;
+  --texto:#2b1810; --linha:rgba(43,24,16,0.12);
+  --shadow:0 10px 30px rgba(43,24,16,0.18);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--texto);}
+.serif{font-family:'Fraunces',serif;}
+body::before{content:"";position:fixed;inset:0;background-image:radial-gradient(circle at 1px 1px, rgba(43,24,16,0.04) 1px, transparent 0);background-size:22px 22px;pointer-events:none;z-index:0;}
+::selection{background:var(--queijo);color:var(--crosta);}
+.icon{width:18px;height:18px;stroke-width:2.2;vertical-align:-4px;}
+
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px 6vw;background:rgba(251,242,221,0.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--linha);}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Fraunces',serif;font-weight:800;font-size:1.4rem;color:var(--molho);}
+.logo span.dot{width:10px;height:10px;border-radius:50%;background:var(--basilico);display:inline-block;}
+.nav-links{display:flex;gap:34px;align-items:center;}
+.nav-links a{text-decoration:none;color:var(--texto);font-weight:700;font-size:0.92rem;position:relative;padding-bottom:4px;}
+.nav-links a::after{content:"";position:absolute;left:0;bottom:0;width:0;height:2px;background:var(--molho);transition:width .25s ease;}
+.nav-links a:hover::after{width:100%;}
+.cart-btn{display:flex;align-items:center;gap:8px;background:var(--crosta);color:var(--mozzarela);border:none;padding:10px 18px;border-radius:999px;font-weight:700;cursor:pointer;font-size:0.9rem;transition:transform .2s ease,box-shadow .2s ease;}
+.cart-btn:hover{transform:translateY(-2px);box-shadow:var(--shadow);}
+.cart-count{background:var(--queijo);color:var(--crosta);width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:900;}
+
+.hero{position:relative;z-index:1;min-height:88vh;display:flex;align-items:center;padding:0 6vw;overflow:hidden;}
+.hero-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:40px;align-items:center;width:100%;}
+.eyebrow{font-weight:700;letter-spacing:0.18em;text-transform:uppercase;font-size:0.78rem;color:var(--basilico-dark);display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+.eyebrow::before{content:"";width:30px;height:2px;background:var(--molho);}
+.hero h1{font-family:'Fraunces',serif;font-weight:800;font-size:clamp(2.6rem,5.2vw,4.6rem);line-height:1.02;color:var(--crosta);}
+.hero h1 em{font-style:italic;color:var(--molho);}
+.hero p.lead{margin-top:22px;font-size:1.12rem;line-height:1.6;color:#5a4233;max-width:480px;}
+.hero-ctas{display:flex;gap:16px;margin-top:34px;flex-wrap:wrap;}
+.btn-primary{background:var(--molho);color:#fff;border:none;padding:16px 30px;border-radius:999px;font-weight:700;font-size:1rem;cursor:pointer;box-shadow:0 8px 20px rgba(193,57,31,0.35);transition:transform .2s ease,box-shadow .2s ease;display:inline-flex;align-items:center;gap:8px;}
+.btn-primary:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 14px 28px rgba(193,57,31,0.45);}
+.btn-ghost{background:transparent;border:2px solid var(--crosta);color:var(--crosta);padding:14px 28px;border-radius:999px;font-weight:700;font-size:1rem;cursor:pointer;transition:all .2s ease;}
+.btn-ghost:hover{background:var(--crosta);color:var(--mozzarela);}
+.hero-visual{position:relative;display:flex;align-items:center;justify-content:center;}
+.pizza-wrap{position:relative;width:min(440px,80vw);aspect-ratio:1/1;animation:floaty 6s ease-in-out infinite;}
+@keyframes floaty{0%,100%{transform:translateY(0px) rotate(0deg);}50%{transform:translateY(-14px) rotate(2deg);}}
+.pizza{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 30% 30%,#ffe18a 0 8%,transparent 8.5%),radial-gradient(circle at 65% 22%,#ff9f6b 0 6%,transparent 6.5%),radial-gradient(circle at 75% 60%,#d94a2a 0 7%,transparent 7.5%),radial-gradient(circle at 40% 68%,#ffe18a 0 6%,transparent 6.5%),radial-gradient(circle at 20% 55%,#ff9f6b 0 5%,transparent 5.5%),radial-gradient(circle at 55% 45%,#d94a2a 0 6%,transparent 6.5%),radial-gradient(circle at 80% 35%,#4f7a45 0 4%,transparent 4.5%),radial-gradient(circle at 35% 50%,#4f7a45 0 3.5%,transparent 4%),radial-gradient(circle,#f6c453 0% 62%,#e2a23a 62% 64%,#c1391f 64% 100%);box-shadow:inset 0 0 0 14px rgba(193,57,31,0.9),var(--shadow);position:relative;}
+.pizza::after{content:"";position:absolute;inset:-18px;border-radius:50%;border:2px dashed rgba(43,24,16,0.15);animation:spin 30s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.steam{position:absolute;top:-30px;left:50%;transform:translateX(-50%);width:60px;height:60px;opacity:0.5;background:radial-gradient(circle,rgba(255,255,255,0.8),transparent 70%);filter:blur(8px);animation:rise 3s ease-in-out infinite;}
+@keyframes rise{0%{opacity:0;transform:translate(-50%,10px) scale(0.8);}50%{opacity:0.6;}100%{opacity:0;transform:translate(-50%,-40px) scale(1.2);}}
+.badge-float{position:absolute;background:#fff;padding:12px 18px;border-radius:16px;box-shadow:var(--shadow);font-weight:700;font-size:0.85rem;display:flex;align-items:center;gap:8px;}
+.badge-float.b1{top:6%;right:-4%;animation:floaty 5s ease-in-out infinite .5s;}
+.badge-float.b2{bottom:8%;left:-8%;animation:floaty 7s ease-in-out infinite 1s;}
+.badge-float .icon{color:var(--basilico);}
+
+.section{padding:100px 6vw;position:relative;z-index:1;}
+.section-head{max-width:640px;margin-bottom:56px;}
+.section-head .eyebrow{color:var(--molho-dark);}
+.section-head h2{font-family:'Fraunces',serif;font-weight:800;font-size:clamp(2rem,3.4vw,2.8rem);color:var(--crosta);}
+.section-head p{margin-top:14px;color:#5a4233;font-size:1.05rem;line-height:1.6;}
+
+#cardapio{background:var(--mozzarela);}
+.tabs{display:flex;gap:10px;margin-bottom:40px;flex-wrap:wrap;}
+.tab{border:2px solid var(--linha);background:transparent;padding:9px 20px;border-radius:999px;font-weight:700;cursor:pointer;font-size:0.88rem;transition:all .2s ease;color:var(--texto);}
+.tab.active,.tab:hover{background:var(--crosta);color:var(--mozzarela);border-color:var(--crosta);}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:26px;}
+.pizza-card{background:#fff;border-radius:22px;padding:22px;box-shadow:0 4px 14px rgba(43,24,16,0.08);border:1px solid var(--linha);transition:transform .28s ease,box-shadow .28s ease;display:flex;flex-direction:column;gap:14px;}
+.pizza-card:hover{transform:translateY(-8px);box-shadow:var(--shadow);}
+.pizza-card .swatch{width:60px;height:60px;border-radius:18px;background:linear-gradient(135deg,var(--queijo),var(--molho));display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
+.pizza-card .swatch img{width:100%;height:100%;object-fit:cover;}
+.pizza-card .swatch .icon{width:28px;height:28px;color:#fff;}
+.pizza-card h3{font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;}
+.pizza-card p.desc{font-size:0.9rem;color:#6b5645;line-height:1.5;flex:1;}
+.pizza-card .row{display:flex;align-items:center;justify-content:space-between;margin-top:auto;}
+.price{font-weight:900;font-size:1.2rem;color:var(--molho);}
+.add-btn{background:var(--basilico);color:#fff;border:none;width:42px;height:42px;border-radius:50%;cursor:pointer;transition:transform .2s ease,background .2s ease;display:flex;align-items:center;justify-content:center;}
+.add-btn:hover{background:var(--basilico-dark);transform:rotate(90deg) scale(1.08);}
+.add-btn.added{background:var(--molho);}
+.menu-loading{color:#6b5645;font-style:italic;}
+
+#pedido{background:var(--creme);}
+.order-layout{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:start;}
+.form-card{background:#fff;border-radius:26px;padding:38px;box-shadow:var(--shadow);border:1px solid var(--linha);}
+.field{margin-bottom:20px;}
+.field label{display:flex;align-items:center;gap:6px;font-weight:700;font-size:0.86rem;margin-bottom:8px;color:var(--crosta);}
+.field input,.field textarea,.field select{width:100%;padding:13px 16px;border-radius:12px;border:1.5px solid var(--linha);font-family:inherit;font-size:0.95rem;background:var(--creme);transition:border-color .2s ease,box-shadow .2s ease;}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--molho);box-shadow:0 0 0 4px rgba(193,57,31,0.1);}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+textarea{resize:vertical;min-height:90px;}
+
+.cart-summary{background:var(--crosta);color:var(--mozzarela);border-radius:26px;padding:38px;position:sticky;top:100px;}
+.cart-summary h3{font-family:'Fraunces',serif;font-size:1.5rem;margin-bottom:22px;display:flex;align-items:center;gap:10px;}
+.cart-items{display:flex;flex-direction:column;gap:14px;max-height:300px;overflow-y:auto;margin-bottom:18px;}
+.cart-item{display:flex;justify-content:space-between;align-items:center;padding-bottom:14px;border-bottom:1px solid rgba(255,248,236,0.12);font-size:0.92rem;}
+.cart-item .name{font-weight:700;}
+.cart-item .qty-controls{display:flex;align-items:center;gap:8px;margin-top:4px;}
+.qty-controls button{background:rgba(255,248,236,0.12);border:none;color:#fff;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:0.85rem;}
+.cart-empty{color:rgba(255,248,236,0.5);font-size:0.9rem;text-align:center;padding:30px 0;}
+.cart-totals{border-top:1px solid rgba(255,248,236,0.15);padding-top:16px;}
+.cart-totals .line{display:flex;justify-content:space-between;margin-bottom:8px;font-size:0.92rem;opacity:0.85;}
+.cart-totals .total{display:flex;justify-content:space-between;font-weight:800;font-size:1.3rem;margin-top:10px;}
+.submit-btn{width:100%;margin-top:22px;background:var(--queijo);color:var(--crosta);border:none;padding:16px;border-radius:14px;font-weight:800;font-size:1rem;cursor:pointer;transition:transform .2s ease,box-shadow .2s ease;display:flex;align-items:center;justify-content:center;gap:8px;}
+.submit-btn:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(244,197,66,0.35);}
+.submit-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+
+#sobre{background:var(--basilico-dark);color:var(--mozzarela);}
+.why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;}
+.why-card{background:rgba(255,248,236,0.06);padding:30px;border-radius:20px;border:1px solid rgba(255,248,236,0.1);transition:transform .25s ease,background .25s ease;}
+.why-card:hover{transform:translateY(-6px);background:rgba(255,248,236,0.1);}
+.why-card .icon{width:32px;height:32px;color:var(--queijo);margin-bottom:14px;}
+.why-card h4{font-size:1.1rem;margin-bottom:8px;font-family:'Fraunces',serif;}
+.why-card p{font-size:0.92rem;opacity:0.8;line-height:1.55;}
+#sobre .section-head h2,#sobre .section-head p{color:var(--mozzarela);}
+#sobre .eyebrow{color:var(--queijo);}
+#sobre .eyebrow::before{background:var(--queijo);}
+
+footer{padding:50px 6vw 30px;background:var(--crosta);color:rgba(255,248,236,0.6);text-align:center;font-size:0.85rem;}
+footer .logo{justify-content:center;color:var(--queijo);margin-bottom:10px;}
+footer a{color:rgba(255,248,236,0.6);}
+
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(120%);background:var(--crosta);color:var(--mozzarela);padding:16px 26px;border-radius:999px;font-weight:700;box-shadow:var(--shadow);z-index:1000;display:flex;align-items:center;gap:10px;transition:transform .4s cubic-bezier(.34,1.56,.64,1);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+.overlay{position:fixed;inset:0;background:rgba(43,24,16,0.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:2000;opacity:0;pointer-events:none;transition:opacity .3s ease;}
+.overlay.show{opacity:1;pointer-events:all;}
+.modal{background:#fff;border-radius:26px;padding:46px;max-width:420px;text-align:center;transform:scale(0.85);transition:transform .35s cubic-bezier(.34,1.56,.64,1);box-shadow:var(--shadow);}
+.overlay.show .modal{transform:scale(1);}
+.modal .check{width:74px;height:74px;border-radius:50%;background:var(--basilico);margin:0 auto 20px;display:flex;align-items:center;justify-content:center;color:#fff;animation:pop .4s cubic-bezier(.34,1.56,.64,1);}
+.modal .check .icon{width:34px;height:34px;}
+@keyframes pop{0%{transform:scale(0);}100%{transform:scale(1);}}
+.modal h3{font-family:'Fraunces',serif;font-size:1.5rem;margin-bottom:10px;}
+.modal p{color:#6b5645;font-size:0.95rem;line-height:1.55;margin-bottom:24px;}
+
+@media(max-width:880px){
+  .hero-grid{grid-template-columns:1fr;}
+  .hero-visual{order:-1;}
+  .order-layout{grid-template-columns:1fr;}
+  .cart-summary{position:static;}
+  .why-grid{grid-template-columns:1fr;}
+  .nav-links{display:none;}
+  .field-row{grid-template-columns:1fr;}
+}
+@media (prefers-reduced-motion: reduce){*{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span class="dot"></span>Mamma Mia <span style="color:var(--basilico)">Delivery</span></div>
+  <div class="nav-links">
+    <a href="#cardapio">Cardápio</a>
+    <a href="#pedido">Pedido</a>
+    <a href="#sobre">Por que nós</a>
+  </div>
+  <button class="cart-btn" onclick="document.getElementById('pedido').scrollIntoView({behavior:'smooth'})">
+    <i data-lucide="shopping-cart" class="icon"></i> Carrinho <span class="cart-count" id="navCartCount">0</span>
+  </button>
+</nav>
+
+<section class="hero">
+  <div class="hero-grid">
+    <div>
+      <div class="eyebrow">Pizzaria de bairro, sabor de família</div>
+      <h1 class="serif">Pizza quente,<br><em>direto</em> na sua porta.</h1>
+      <p class="lead">Chega de ligar e esperar na linha. Monte seu pedido online, escolha o endereço de entrega e acompanhe — simples assim, do nosso forno para sua mesa.</p>
+      <div class="hero-ctas">
+        <button class="btn-primary" onclick="document.getElementById('cardapio').scrollIntoView({behavior:'smooth'})"><i data-lucide="utensils" class="icon"></i> Ver cardápio</button>
+        <button class="btn-ghost" onclick="document.getElementById('pedido').scrollIntoView({behavior:'smooth'})">Fazer pedido</button>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="pizza-wrap">
+        <div class="steam"></div>
+        <div class="pizza"></div>
+        <div class="badge-float b1"><i data-lucide="clock" class="icon"></i> Entrega em ~35 min</div>
+        <div class="badge-float b2"><i data-lucide="flame" class="icon"></i> Forno a lenha</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="cardapio">
+  <div class="section-head">
+    <div class="eyebrow">Cardápio</div>
+    <h2 class="serif">Escolha seus sabores</h2>
+    <p>Massa fermentada por 48h, molho de tomate fresco e ingredientes selecionados todos os dias.</p>
+  </div>
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-cat="todas">Todas</button>
+    <button class="tab" data-cat="classicas">Clássicas</button>
+    <button class="tab" data-cat="especiais">Especiais</button>
+    <button class="tab" data-cat="doces">Doces</button>
+  </div>
+  <div class="menu-grid" id="menuGrid"><p class="menu-loading">Carregando cardápio…</p></div>
+</section>
+
+<section class="section" id="pedido">
+  <div class="section-head">
+    <div class="eyebrow">Finalizar pedido</div>
+    <h2 class="serif">Para onde levamos sua pizza?</h2>
+    <p>Preencha seus dados e o endereço de entrega. Confirmamos tudo antes de colocar no forno.</p>
+  </div>
+  <div class="order-layout">
+    <form class="form-card" id="orderForm">
+      <div class="field">
+        <label for="nome"><i data-lucide="user" class="icon"></i> Nome completo</label>
+        <input type="text" id="nome" placeholder="Ex: Maria Souza" required>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="telefone"><i data-lucide="phone" class="icon"></i> Telefone / WhatsApp</label>
+          <input type="tel" id="telefone" placeholder="(11) 99999-0000" required>
+        </div>
+        <div class="field">
+          <label for="pagamento"><i data-lucide="credit-card" class="icon"></i> Pagamento na entrega</label>
+          <select id="pagamento">
+            <option value="dinheiro">Dinheiro</option>
+            <option value="cartao">Cartão (maquininha)</option>
+            <option value="pix">Pix</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="endereco"><i data-lucide="map-pin" class="icon"></i> Endereço de entrega</label>
+        <input type="text" id="endereco" placeholder="Rua, número, bairro" required>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="complemento"><i data-lucide="building-2" class="icon"></i> Complemento</label>
+          <input type="text" id="complemento" placeholder="Apto, bloco, ponto de referência">
+        </div>
+        <div class="field">
+          <label for="cep"><i data-lucide="signpost" class="icon"></i> CEP</label>
+          <input type="text" id="cep" placeholder="00000-000">
+        </div>
+      </div>
+      <div class="field">
+        <label for="obs"><i data-lucide="message-square" class="icon"></i> Observações do pedido</label>
+        <textarea id="obs" placeholder="Ex: sem cebola, cortar em 8 fatias, campainha não funciona..."></textarea>
+      </div>
+    </form>
+
+    <div class="cart-summary">
+      <h3 class="serif"><i data-lucide="shopping-bag" class="icon"></i> Seu pedido</h3>
+      <div class="cart-items" id="cartItems"><div class="cart-empty">Seu carrinho está vazio.<br>Adicione uma pizza do cardápio</div></div>
+      <div class="cart-totals">
+        <div class="line"><span>Subtotal</span><span id="subtotal">R$ 0,00</span></div>
+        <div class="line"><span>Taxa de entrega</span><span id="taxa">R$ 0,00</span></div>
+        <div class="total"><span>Total</span><span id="total">R$ 0,00</span></div>
+      </div>
+      <button class="submit-btn" id="submitBtn" disabled><i data-lucide="check-circle-2" class="icon"></i> Confirmar pedido</button>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sobre">
+  <div class="section-head">
+    <div class="eyebrow">Por que pedir conosco</div>
+    <h2 class="serif">Sem fila de telefone, sem complicação</h2>
+    <p>Criamos esse sistema pensando em quem só quer pedir uma pizza boa sem perder tempo.</p>
+  </div>
+  <div class="why-grid">
+    <div class="why-card"><i data-lucide="monitor-smartphone" class="icon"></i><h4 class="serif">Pedido direto online</h4><p>Monte seu pedido no site, sem precisar ligar e esperar na linha do telefone.</p></div>
+    <div class="why-card"><i data-lucide="map-pinned" class="icon"></i><h4 class="serif">Endereço sempre certo</h4><p>Você digita o endereço de entrega com calma — sem erro de quem anota correndo no papel.</p></div>
+    <div class="why-card"><i data-lucide="clipboard-list" class="icon"></i><h4 class="serif">Observações registradas</h4><p>Sem cebola, bem passada, campainha quebrada — tudo fica registrado certinho no pedido.</p></div>
+  </div>
+</section>
+
+<footer>
+  <div class="logo">Mamma Mia Delivery</div>
+  <p>Sistema de pedidos online — Mamma Mia Delivery Web v1.0.0 · <a href="login.html">Acesso da equipe</a></p>
+</footer>
+
+<div class="toast" id="toast"><i data-lucide="check" class="icon"></i><span id="toastMsg">Adicionado ao carrinho</span></div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="check"><i data-lucide="check" class="icon"></i></div>
+    <h3 class="serif">Pedido enviado!</h3>
+    <p id="modalMsg">Recebemos seu pedido e já estamos preparando.</p>
+    <button class="btn-primary" onclick="closeModal()">Fechar</button>
+  </div>
+</div>
+
+<script src="supabase-config.js"></script>
+<script>
+lucide.createIcons();
+
+const TAXA_ENTREGA = 6.00;
+let MENU = [];
+let cart = {};
+let activeCat = 'todas';
+
+const grid = document.getElementById('menuGrid');
+const fmt = v => v.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+
+async function carregarCardapio(){
+  const { data, error } = await supabaseClient
+    .from('cardapio')
+    .select('*')
+    .eq('disponivel', true)
+    .order('categoria', { ascending: true });
+
+  if(error){
+    grid.innerHTML = `<p class="menu-loading">Não foi possível carregar o cardápio agora. (${error.message})</p>`;
+    return;
+  }
+  MENU = data;
+  renderMenu();
+}
+
+function renderMenu(){
+  grid.innerHTML = '';
+  const items = MENU.filter(p => activeCat === 'todas' || p.categoria === activeCat);
+  if(items.length === 0){
+    grid.innerHTML = '<p class="menu-loading">Nenhuma pizza nessa categoria no momento.</p>';
+    return;
+  }
+  items.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'pizza-card';
+    card.innerHTML = `
+      <div class="swatch">${p.imagem_url ? `<img src="${p.imagem_url}" alt="${p.nome}">` : `<i data-lucide="pizza" class="icon"></i>`}</div>
+      <h3 class="serif">${p.nome}</h3>
+      <p class="desc">${p.descricao || ''}</p>
+      <div class="row">
+        <span class="price">${fmt(p.preco)}</span>
+        <button class="add-btn" data-id="${p.id}"><i data-lucide="plus" class="icon"></i></button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+  lucide.createIcons();
+  document.querySelectorAll('.add-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      addToCart(btn.dataset.id);
+      btn.classList.add('added');
+      setTimeout(() => btn.classList.remove('added'), 700);
+    });
+  });
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    activeCat = tab.dataset.cat;
+    renderMenu();
+  });
+});
+
+function addToCart(id){
+  cart[id] = (cart[id] || 0) + 1;
+  renderCart();
+  showToast(`${MENU.find(p=>p.id===id).nome} adicionada ao carrinho`);
+}
+function changeQty(id, delta){
+  if(!cart[id]) return;
+  cart[id] += delta;
+  if(cart[id] <= 0) delete cart[id];
+  renderCart();
+}
+
+const cartItemsEl = document.getElementById('cartItems');
+const subtotalEl = document.getElementById('subtotal');
+const taxaEl = document.getElementById('taxa');
+const totalEl = document.getElementById('total');
+const submitBtn = document.getElementById('submitBtn');
+const navCartCount = document.getElementById('navCartCount');
+
+function renderCart(){
+  const ids = Object.keys(cart);
+  let totalQty = 0;
+  if(ids.length === 0){
+    cartItemsEl.innerHTML = '<div class="cart-empty">Seu carrinho está vazio.<br>Adicione uma pizza do cardápio</div>';
+    subtotalEl.textContent = fmt(0); taxaEl.textContent = fmt(0); totalEl.textContent = fmt(0);
+    submitBtn.disabled = true; navCartCount.textContent = '0';
+    return;
+  }
+  let subtotal = 0;
+  cartItemsEl.innerHTML = ids.map(id => {
+    const p = MENU.find(m => m.id === id);
+    const qty = cart[id];
+    totalQty += qty;
+    subtotal += p.preco * qty;
+    return `<div class="cart-item">
+      <div><div class="name">${p.nome}</div>
+      <div class="qty-controls"><button onclick="changeQty('${id}',-1)">−</button><span>${qty}</span><button onclick="changeQty('${id}',1)">+</button></div></div>
+      <div>${fmt(p.preco * qty)}</div></div>`;
+  }).join('');
+  subtotalEl.textContent = fmt(subtotal);
+  taxaEl.textContent = fmt(TAXA_ENTREGA);
+  totalEl.textContent = fmt(subtotal + TAXA_ENTREGA);
+  submitBtn.disabled = false;
+  navCartCount.textContent = totalQty;
+}
+
+const toast = document.getElementById('toast');
+const toastMsg = document.getElementById('toastMsg');
+let toastTimer;
+function showToast(msg){
+  toastMsg.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+const overlay = document.getElementById('overlay');
+function closeModal(){ overlay.classList.remove('show'); }
+
+submitBtn.addEventListener('click', async () => {
+  const nome = document.getElementById('nome').value.trim();
+  const telefone = document.getElementById('telefone').value.trim();
+  const endereco = document.getElementById('endereco').value.trim();
+  const complemento = document.getElementById('complemento').value.trim();
+  const cep = document.getElementById('cep').value.trim();
+  const obs = document.getElementById('obs').value.trim();
+  const pagamento = document.getElementById('pagamento').value;
+
+  if(!nome || !telefone || !endereco){
+    showToast('Preencha nome, telefone e endereço para continuar');
+    document.getElementById('orderForm').reportValidity();
+    return;
+  }
+
+  const ids = Object.keys(cart);
+  let subtotal = 0;
+  ids.forEach(id => { subtotal += MENU.find(p=>p.id===id).preco * cart[id]; });
+  const total = subtotal + TAXA_ENTREGA;
+
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<i data-lucide="loader-2" class="icon"></i> Enviando...';
+  lucide.createIcons();
+
+  const { data: pedido, error: errPedido } = await supabaseClient
+    .from('pedidos')
+    .insert({
+      nome_cliente: nome, telefone, endereco, complemento, cep,
+      observacoes: obs, forma_pagamento: pagamento,
+      subtotal, taxa_entrega: TAXA_ENTREGA, total, status: 'recebido'
+    })
+    .select()
+    .single();
+
+  if(errPedido){
+    showToast('Erro ao enviar pedido: ' + errPedido.message);
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i data-lucide="check-circle-2" class="icon"></i> Confirmar pedido';
+    lucide.createIcons();
+    return;
+  }
+
+  const itens = ids.map(id => {
+    const p = MENU.find(m => m.id === id);
+    return { pedido_id: pedido.id, pizza_id: p.id, nome_pizza: p.nome, quantidade: cart[id], preco_unitario: p.preco };
+  });
+  await supabaseClient.from('itens_pedido').insert(itens);
+
+  document.getElementById('modalMsg').textContent =
+    `Obrigado, ${nome.split(' ')[0]}! Recebemos seu pedido para ${endereco}. Tempo estimado de entrega: 30–40 minutos.`;
+  overlay.classList.add('show');
+
+  cart = {};
+  renderCart();
+  document.getElementById('orderForm').reset();
+  submitBtn.innerHTML = '<i data-lucide="check-circle-2" class="icon"></i> Confirmar pedido';
+  lucide.createIcons();
+});
+
+overlay.addEventListener('click', e => { if(e.target === overlay) closeModal(); });
+
+carregarCardapio();
+</script>
+</body>
+</html>
